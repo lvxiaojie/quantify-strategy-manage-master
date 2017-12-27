@@ -1,0 +1,158 @@
+ol{
+	margin: 0;	
+    padding: 0 0 0 15px;
+}
+blockquote{
+	margin: 25px 0 10px 0;
+}
+blockquote p{
+	/*padding: 10px;*/
+	line-height:30px;
+    color: #2C3E50;
+    font-size: 16px;
+}
+.help_left ul{
+	list-style: none;
+	margin: 0;
+	padding: 0 0 0 20px;
+}
+
+.help_left ul li a{
+	color: #333;
+	font-size: 14px;	
+}
+#help img{
+	border-radius: 4px;
+	margin-bottom: 20px;
+	/*max-height: 300px;*/
+	max-width: 400px;
+	display: block;
+}
+#help{
+	width: 100%;
+	
+}
+.indent1 a{
+	font-weight: bold;
+}
+.indent2{
+	padding: 2px 0 2px 20px;
+}
+.indent3{
+	padding-left: 45px;
+}
+
+.help_left{
+    position: fixed;
+    top: 62px;
+    left: 0;
+    bottom: 0;
+    width: 300px;   
+    background-color: #f6f6f6;   
+    padding: 2rem 0;
+    z-index: 1;
+    overflow-y: auto;
+    color: #333;
+    box-shadow: 5px 5px 20px 1px #ccc;
+
+}
+
+.help_left .active{
+	background-color: #ececec;
+    border-color: #5389d2; 
+}
+.list-group-item{
+	font-size: 14px;
+}
+.help_right{		
+	margin-left: 300px;
+	position: relative;
+	padding: 20px 120px 0 50px;
+	font-size: 16px;
+	height: 650px;
+	overflow: auto;
+}
+.helpTitle{	
+	margin: 10px 0 10px;
+    line-height: 60px;
+}
+.helpSubtitle{
+	margin: 10px 0;
+	line-height: 60px;
+}
+.dirves{
+	height: 0px;
+	border-bottom:1px dashed #ccc;
+	border-top: none;
+}
+.keyword{
+	color: #CC99CC;
+}
+.zhushi{
+	color: #998;
+    font-style: italic;
+}
+.log{
+	color: #99CC99;
+}
+.zero{
+	    color: #F99157;
+}
+.equal{
+	color: #66CCCC;
+}
+.log{
+
+}
+#help:after{
+	content: '';
+	display: block;
+	height: 0;
+	clear: both;
+}
+.img_br{
+	margin: 10px 0 10px 0;
+}
+.backTop{
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background-color: #fff;   
+    text-align: center;
+    cursor: pointer;
+    color: #c3c5c6;
+    box-shadow: 0 0 6px #ccc;
+	display: block;   
+    float: right;    
+    margin: -70px 25px;
+    font-size: 20px;
+        line-height: 55px;
+}
+.backTop:hover{
+	color:#337ab7;
+}
+.backTop i{
+	font-size: 20px;
+}
+.backTop div{
+	font-size: 11px
+}
+@media screen and (max-width: 767px) {	
+	#help{
+		width: 100%;
+		padding: 10px;
+	}
+
+	.help_left{
+		width: 100%;
+		float: left;
+	}
+	.list-group-item{
+		font-size:12px
+	}
+	.help_right{
+		width: 100%;
+		float: left;
+		margin-left: 0;
+	}
+}

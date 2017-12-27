@@ -1,0 +1,180 @@
+#changeDiv {
+    cursor: nw-resize;
+}
+/*.dropdown:hover .dropdown-menu {
+    display: block;
+    margin-top: 0;
+ }*/
+#div_01 {
+    position: absolute;
+    width: 10px;
+    height: 100%;
+    /*background-color: red;*/
+    top: 0px;
+    right: 0px;
+}
+
+#div_01:hover {
+    cursor: e-resize;
+}
+
+#div_02 {
+    position: absolute;
+    width: 100%;
+    height: 10px;
+    /*background-color: red;*/
+    bottom: 0px;
+    left: 0px;
+}
+
+#div_02:hover {
+    cursor: n-resize;
+}
+
+#div_03 {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    /*background-color:black;*/
+    right: 0px;
+    bottom: 0px;
+}
+
+#div_03:hover {
+    cursor: nw-resize;
+}
+
+#div_0 {
+    text-align: center;
+    height: 30px;
+    width: 100%;
+    background-color: silver;
+    margin: 0px;
+}
+
+#div_0 p {
+    margin: 0px;
+    line-height: 30px;
+    font: bold 17px 微软雅黑, arial;
+}
+.predict_format{
+	margin-bottom: 5px;
+}
+.predict_format input {
+    width: 29%;
+    margin-right: 2%;
+    display: inline;
+}
+.predict_format i{
+	color:#fff;
+	cursor: pointer;
+}
+.predict_format i:hover{
+	color:#88e7ff;
+}
+.create_trade{
+    top:85%;
+}
+.predict_format_code{
+    margin-bottom: 5px;
+}
+.predict_format_code input {
+    width: 29%;
+    margin-right: 2%;
+    display: inline;
+}
+.predict_format_code i{
+    color:#fff;
+    cursor: pointer;
+}
+.predict_format_code i:hover{
+    color:#88e7ff;
+}
+.modal_lable {
+    text-align: left!important;
+    padding-left: 35px;
+}
+.modal_div {
+    padding-left: 15px;
+}
+
+#div_001 {
+    position: absolute;
+    width: 10px;
+    height: 100%;
+    /*background-color: red;*/
+    top: 0px;
+    right: 0px;
+}
+
+#div_001:hover {
+    cursor: e-resize;
+}
+
+#div_002 {
+    position: absolute;
+    width: 100%;
+    height: 10px;
+    /*background-color: red;*/
+    bottom: 0px;
+    left: 0px;
+}
+
+#div_002:hover {
+    cursor: n-resize;
+}
+
+#div_003 {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    /*background-color:black;*/
+    right: 0px;
+    bottom: 0px;
+}
+
+#div_003:hover {
+    cursor: nw-resize;
+}
+
+#div_0001 {
+    position: absolute;
+    width: 10px;
+    height: 100%;
+    /*background-color: red;*/
+    top: 0px;
+    right: 0px;
+}
+
+#div_0001:hover {
+    cursor: e-resize;
+}
+
+#div_0002 {
+    position: absolute;
+    width: 100%;
+    height: 10px;
+    /*background-color: red;*/
+    bottom: 0px;
+    left: 0px;
+}
+
+#div_0002:hover {
+    cursor: n-resize;
+}
+
+#div_0003 {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    /*background-color:black;*/
+    right: 0px;
+    bottom: 0px;
+}
+
+#div_0003:hover {
+    cursor: nw-resize;
+}
+
+
+

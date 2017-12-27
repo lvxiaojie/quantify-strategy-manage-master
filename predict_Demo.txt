@@ -1,0 +1,386 @@
+﻿#coding: UTF-8
+import time
+import datetime
+import numpy as np
+from pandas import Series, DataFrame
+import pandas as pd
+import tarfile
+import pickle
+import talib
+from sklearn.externals import joblib
+from sklearn import preprocessing
+from collections import defaultdict
+
+def on_init(context):
+    """
+    Params:
+      context - obj
+    """
+    context.var.tickList = []          #用于存放每分钟的价格
+    context.var.tickVolume = []        #用来放置每分钟的成交量
+    context.var.high = []
+    context.var.low =[]
+
+    context.var.pred_max = None
+    context.var.pred_min = None
+    context.var.pred_avg = None
+    context.var.predict_max_1 = None
+    context.var.predict_min_1 = None
+    context.var.predict_avg_1 = None
+    context.var.predict_max = None
+    context.var.predict_min = None
+    context.var.predict_avg = None
+    context.var.dailyclose = []
+    context.var.buyposnum = 0   
+    context.var.buyposdic = defaultdict(dict)   
+    context.var.shortposnum = 0 
+    context.var.shortposdic = defaultdict(dict)
+    context.var.pos = 0
+        
+        
+    context.var.OBV = [0]
+    context.var.BOLL_WIDTH = [] 
+    context.var.MACD30_60 = []
+    context.var.MACD10_60 = []
+    context.var.SAR = []
+    context.var.EMA60 = []
+    context.var.WILLR30 = []
+    context.var.WILLR60 = []
+    context.var.ADX60 = []
+    context.var.RSI60 = []
+    context.var.ADX30 = []
+    context.var.RSI30 = []
+
+    context.var.lastOrder = None   #用来判断是否委托成功
+    context.var.prednum = 0 
+    context.var.preddic = defaultdict(dict)
+    context.var.day = None  
+
+
+    tar = tarfile.open('MMA_model_V2.tar.gz')   #解压依赖文件，读取模型
+    tar.extractall()
+    tar.close()
+
+
+    global clf_max
+
+    clf_max = joblib.load('RF_minutesmax_328V2.pkl')
+
+    global clf_min
+
+    clf_min = joblib.load('RF_minutesmin_328V2.pkl')
+
+    global clf_avg
+
+    clf_avg = joblib.load('RF_minutesavg_328V2.pkl')
+
+def on_start(context):
+    context.function.log(u'RFDemo started')
+    context.var.beginTrace = True 
+
+
+def on_stop(context):
+    context.function.log(u'RFDemo stoped')
+    context.var.beginTrace = False
+
+def on_tick(context):
+    pass
+
+def on_bar(context):
+    if not context.var.beginTrace:
+        return 
+
+
+    def Calc_OBV(dt,volume,obv_1):
+            obv = 0
+            if dt[0] < dt[1]:
+                obv = obv_1 + volume
+            elif dt[0] > dt[1]:
+                obv = obv_1 - volume
+            else:
+                obv = obv_1
+            return obv
+
+    bar = context.var.bar         
+
+    context.var.tickList.append(bar.close)
+    context.function.log('\n'+u'时间:'+str(bar.datetime))
+    context.function.log(u'最新价格:'+str(bar.close))
+    context.var.tickVolume.append(bar.volume)
+    context.var.high.append(bar.high)      
+    context.var.low.append(bar.low)
+    
+    tickList_10 = context.var.tickList[-10:]    
+    tickList_30 = context.var.tickList[-30:]
+    tickList_60 = context.var.tickList[-60:]
+
+    if len(context.var.tickList) == 1:
+        context.var.day = bar.datetime.day
+
+    if bar.datetime.day == context.var.day:
+        context.var.dailyclose.append(bar.close)
+    else:
+        context.var.day = bar.datetime.day
+        context.var.dailyclose = []
+        context.var.dailyclose.append(bar.close)
+        context.function.log('\n'+u'new day!'+'\n')
+
+
+    
+    if len(context.var.tickList) > 2:
+        context.var.tickList[-1] = context.var.tickList[-2] * 0.2 + context.var.tickList[-1] * 0.8
+        if len(context.var.dailyclose) == 1:
+            temp_volume = context.var.tickVolume[-1]
+        else:
+            temp_volume = context.var.tickVolume[-1] - context.var.tickVolume[-2]
+        context.var.OBV.append(Calc_OBV(context.var.tickList[-2:],temp_volume,context.var.OBV[-1]))
+
+    if len(tickList_60) == 60:
+        context.var.BOLL_WIDTH.append(list(pd.rolling_std(Series(tickList_60),60) * 6)[-1])
+        context.var.MACD10_60.append(list(pd.ewma(Series(tickList_10),10))[-1] - list(pd.ewma(Series(tickList_60),60))[-1])
+        context.var.MACD30_60.append(list(pd.ewma(Series(tickList_30),30))[-1] - list(pd.ewma(Series(tickList_60),60))[-1])
+        context.var.SAR.append(talib.SAR(np.array(context.var.high),np.array(context.var.low))[-1])
+        context.var.EMA60.append(list(pd.ewma(Series(tickList_60),60))[-1])
+        context.var.WILLR30.append(talib.WILLR(np.array(context.var.high),np.array(context.var.low),np.array(context.var.tickList),timeperiod=30)[-1])
+        context.var.WILLR60.append(talib.WILLR(np.array(context.var.high),np.array(context.var.low),np.array(context.var.tickList),timeperiod=60)[-1])
+        context.var.RSI60.append(talib.RSI(np.array(context.var.tickList),timeperiod = 60)[-1])
+        context.var.RSI30.append(talib.RSI(np.array(context.var.tickList),timeperiod = 30)[-1])
+
+    if len(context.var.tickList) > 120:
+        context.var.ADX60.append(talib.ADX(np.array(context.var.high),np.array(context.var.low),np.array(context.var.tickList),timeperiod=60)[-1])
+        context.var.ADX30.append(talib.ADX(np.array(context.var.high),np.array(context.var.low),np.array(context.var.tickList),timeperiod=30)[-1])
+
+
+    if len(context.var.tickList) > 220:
+        Latestprice_pred = preprocessing.minmax_scale(context.var.tickList[-100:])[-1]
+        OBV_pred = preprocessing.minmax_scale(context.var.OBV[-100:])[-1]
+        boll_width_pred = preprocessing.minmax_scale(context.var.BOLL_WIDTH[-100:])[-1]
+        MACD30_60_pred = preprocessing.minmax_scale(context.var.MACD30_60[-100:])[-1]
+        MACD10_60_pred = preprocessing.minmax_scale(context.var.MACD10_60[-100:])[-1]
+        SAR_pred = preprocessing.minmax_scale(context.var.SAR[-100:])[-1]
+        EMA60_pred = preprocessing.minmax_scale(context.var.EMA60[-100:])[-1]
+        WILLR30_pred = preprocessing.minmax_scale(context.var.WILLR30[-100:])[-1]
+        WILLR60_pred = preprocessing.minmax_scale(context.var.WILLR60[-100:])[-1]
+        ADX60_pred = preprocessing.minmax_scale(context.var.ADX60[-100:])[-1]
+        RSI60_pred = preprocessing.minmax_scale(context.var.RSI60[-100:])[-1]
+        ADX30_pred = preprocessing.minmax_scale(context.var.ADX30[-100:])[-1]
+        RSI30_pred = preprocessing.minmax_scale(context.var.RSI30[-100:])[-1]
+
+
+        if ((len(context.var.dailyclose) >= 40) & (len(context.var.dailyclose) <= 210)):
+
+            context.var.pred_max = [[Latestprice_pred,OBV_pred,boll_width_pred,MACD30_60_pred,MACD10_60_pred,SAR_pred,EMA60_pred,WILLR30_pred,WILLR60_pred
+                                    ,ADX60_pred,RSI60_pred,ADX30_pred,RSI30_pred]]
+
+            context.var.pred_min = [[Latestprice_pred,OBV_pred,boll_width_pred,MACD30_60_pred,MACD10_60_pred,SAR_pred,EMA60_pred,WILLR30_pred,WILLR60_pred
+                                    ,ADX60_pred,RSI60_pred,ADX30_pred,RSI30_pred]]
+
+            context.var.pred_avg = [[Latestprice_pred,OBV_pred,boll_width_pred,MACD30_60_pred,MACD10_60_pred,SAR_pred,EMA60_pred,WILLR30_pred,WILLR60_pred
+                                    ,ADX60_pred,RSI60_pred,ADX30_pred,RSI30_pred]]
+
+            context.function.log(u'特征值:'+str(context.var.pred_avg)+'\n')
+
+            context.var.predict_max_1 = context.var.predict_max
+            context.var.predict_min_1 = context.var.predict_min
+            context.var.predict_avg_1 = context.var.predict_avg
+
+            context.var.predict_max = clf_max.predict(context.var.pred_max)
+            context.var.predict_min = clf_min.predict(context.var.pred_min)
+            context.var.predict_avg = clf_avg.predict(context.var.pred_avg)
+            
+            minutes_price = context.var.dailyclose[-30:]
+            minutes_max = np.max(minutes_price)
+            minutes_min = np.min(minutes_price)
+            minutes_avg = np.mean(minutes_price)
+            context.function.log(u'当前价格:' + str(bar.close) + u',前30分钟最大值:' + str(minutes_max) + u',前30分钟最小值:' + str(minutes_min)
+                                +u',前30分钟平均值:'+str(minutes_avg)+'\n'+u'max预测:'+str(context.var.predict_max)+u'min预测:'+str(context.var.predict_min)
+                                +u'avg预测:'+str(context.var.predict_avg)+'\n')
+
+
+            context.var.preddic[context.var.prednum] = {'day':context.var.day,'time':bar.datetime,
+                                                        'max':minutes_max,
+                                                        'min':minutes_min,
+                                                        'avg':minutes_avg,
+                                                        'next_len' : len(context.var.dailyclose) + 29,
+                                                        'pred_max':context.var.predict_max,
+                                                        'pred_min':context.var.predict_min,
+                                                        'pred_avg':context.var.predict_avg}
+            context.var.prednum += 1
+
+            if context.var.pos == 0:
+                if ((bar.close - minutes_min) / bar.close) > 0.00096 and bar.close > minutes_avg and context.var.predict_min == -1 and context.var.predict_min == context.var.predict_min_1:
+                    context.function.log(u'当前价和30分钟最小值相差较大，并且预测最小值降低，卖开,卖开编号：' + str(context.var.shortposnum))
+                    context.function.short(bar.close)
+                    context.var.pos = -1
+                    context.var.shortposdic[context.var.shortposnum] = {'time':bar.datetime,
+                                                                        'shortprice':bar.close,
+                                                                        'max':minutes_max,
+                                                                        'min':minutes_min,
+                                                                        'avg':minutes_avg,
+                                                                        'coverprice':0.0,
+                                                                        'covertime':None,
+                                                                        'latestprice':None,
+                                                                        'pred_max':context.var.predict_max,
+                                                                        'pred_min':context.var.predict_min,
+                                                                        'pred_avg':context.var.predict_avg,
+                                                                        'len':len(context.var.dailyclose),
+                                                                        'prof':None,
+                                                                        'lag':None,
+                                                                        't_min':None}
+
+                    context.var.shortposnum +=1
+
+                if ((minutes_max - bar.close) / bar.close) > 0.00096 and bar.close < minutes_avg and context.var.predict_max == 1 and context.var.predict_max == context.var.predict_max_1:
+                    context.function.log(u'当前价和30分钟最大值相差较大，并且预测最大值升高，买开,买开编号：' + str(context.var.buyposnum))
+                    context.function.buy(bar.close)
+                    context.var.pos = 1
+                    context.var.buyposdic[context.var.buyposnum] = {'time':bar.datetime,
+                                                                        'buyprice':bar.close,
+                                                                        'max':minutes_max,
+                                                                        'min':minutes_min,
+                                                                        'avg':minutes_avg,
+                                                                        'sellprice':0.0,
+                                                                        'selltime':None,
+                                                                        'latestprice':None,
+                                                                        'pred_max':context.var.predict_max,
+                                                                        'pred_min':context.var.predict_min,
+                                                                        'pred_avg':context.var.predict_avg,
+                                                                        'len':len(context.var.dailyclose),
+                                                                        'prof':None,
+                                                                        'lag' :None,
+                                                                        't_max':None}
+
+                    context.var.buyposnum +=1
+
+        del_short_num = []
+
+        for num in context.var.shortposdic:
+            if len(context.var.dailyclose) - context.var.shortposdic[num]['len'] < 30:
+                if context.var.shortposdic[num]['latestprice']:
+                    if bar.close > context.var.shortposdic[num]['latestprice']:
+                        context.var.shortposdic[num]['prof'] = -1
+                c_avg = np.mean(context.var.dailyclose[context.var.shortposdic[num]['len']:])
+                if (context.var.shortposdic[num]['shortprice'] - bar.close) / context.var.shortposdic[num]['shortprice'] > 0.00096:
+                    context.function.log(u'卖开编号：'+str(num)+u'已经实现盈利，请注意交易')
+                    context.var.shortposdic[num]['latestprice'] = bar.close
+                    if context.var.shortposdic[num]['lag']:
+                        context.function.cover(bar.close)
+                        context.function.log(u'卖开编号：'+str(num)+u'交易结束，交易结果:'+str(context.var.shortposdic[num]['shortprice'] - bar.close))
+                        del_short_num.append(num)
+                        context.var.pos = 0
+
+                if context.var.shortposdic[num]['lag']:
+                    if bar.close == np.min(context.var.dailyclose[-30:]):
+                        context.var.shortposdic[num]['latestprice'] = bar.close
+
+                    if context.var.shortposdic[num]['prof'] == -1:
+                        context.function.cover(bar.close)
+                        context.var.pos = 0
+                        context.function.log(u'卖开编号：'+str(num)+u'交易结束，交易结果:'+str(context.var.shortposdic[num]['shortprice'] - bar.close))
+                        del_short_num.append(num)
+
+                if bar.close <= context.var.shortposdic[num]['min']:
+                    context.function.log(u'卖开编号：'+str(num)+u'已经小于最低价，可以交易')
+                    context.var.shortposdic[num]['t_min'] = 1
+
+                if context.var.shortposdic[num]['prof'] == -1 and context.var.shortposdic[num]['t_min'] == 1:
+                    context.function.cover(bar.close)
+                    context.var.pos = 0
+                    context.function.log(u'卖开编号：'+str(num)+u'交易结束，交易结果:'+str(context.var.shortposdic[num]['shortprice'] - bar.close))
+                    del_short_num.append(num)
+
+            elif len(context.var.dailyclose) - context.var.shortposdic[num]['len'] == 30:
+                context.function.log(u'卖开编号：'+str(num)+u'超时，未达到交易条件!')
+                if (context.var.shortposdic[num]['shortprice'] - bar.close) / context.var.shortposdic[num]['shortprice'] > 0.00096:
+                    context.function.cover(bar.close)
+                    context.var.pos = 0
+                    context.function.log(u'卖开编号：'+str(num)+u'交易结束，交易结果:'+str(context.var.shortposdic[num]['shortprice'] - bar.close))
+                    del_short_num.append(num)
+                else:
+                    context.var.shortposdic[num]['len'] = len(context.var.dailyclose)
+                    context.var.shortposdic[num]['lag'] = 1
+
+        if del_short_num:
+            for x in del_short_num:
+                del context.var.shortposdic[x]
+
+
+
+        del_buy_num = []
+
+        for num in context.var.buyposdic:
+            if len(context.var.dailyclose) - context.var.buyposdic[num]['len'] < 30:
+                if context.var.buyposdic[num]['latestprice']:
+                    if bar.close < context.var.buyposdic[num]['latestprice']:
+                        context.var.buyposdic[num]['prof'] = -1
+                c_avg = np.mean(context.var.dailyclose[context.var.buyposdic[num]['len']:])
+                if (bar.close - context.var.buyposdic[num]['buyprice']) / context.var.buyposdic[num]['buyprice'] > 0.00096:
+                    context.function.log(u'买开编号：'+str(num)+u'已经实现盈利，请注意交易')
+                    context.var.buyposdic[num]['latestprice'] = bar.close
+                    if context.var.buyposdic[num]['lag']:
+                        context.function.sell(bar.close)
+                        context.var.pos = 0
+                        context.function.log(u'买开编号：'+str(num)+u'交易结束，交易结果:'+str(bar.close - context.var.buyposdic[num]['buyprice'] ))
+                        del_buy_num.append(num)
+
+                if context.var.buyposdic[num]['lag'] == 1:
+                    if bar.close == np.max(context.var.dailyclose[-30:]):
+                        context.var.buyposdic[num]['latestprice'] = bar.close
+
+                    if context.var.buyposdic[num]['prof'] == -1:
+                        context.function.sell(bar.close)
+                        context.var.pos = 0
+                        context.function.log(u'买开编号：'+str(num)+u'交易结束，交易结果:'+str(bar.close - context.var.buyposdic[num]['buyprice'] ))
+                        del_buy_num.append(num)
+
+                if bar.close >= context.var.buyposdic[num]['max']:
+                    context.function.log(u'买开编号：'+str(num)+u'已经大于最高价，可以交易')
+                    context.var.buyposdic[num]['t_max'] = 1
+
+                if context.var.buyposdic[num]['prof'] == -1 and context.var.buyposdic[num]['t_max'] == 1:
+                    context.function.sell(bar.close)
+                    context.var.pos = 0
+                    context.function.log(u'买开编号：'+str(num)+u'交易结束，交易结果:'+str(bar.close - context.var.buyposdic[num]['buyprice'] ))
+                    del_buy_num.append(num)
+
+            elif len(context.var.dailyclose) - context.var.buyposdic[num]['len'] == 30:
+                context.function.log(u'买开编号：'+str(num)+u'超时，未达到交易条件!')
+                if (bar.close - context.var.buyposdic[num]['buyprice']) / context.var.buyposdic[num]['buyprice'] > 0.00096:
+                    context.function.sell(bar.close)
+                    context.var.pos = 0
+                    context.function.log(u'买开编号：'+str(num)+u'交易结束，交易结果:'+str(bar.close - context.var.buyposdic[num]['buyprice']))
+                    del_buy_num.append(num)
+                else:
+                    context.var.buyposdic[num]['len'] = len(context.var.dailyclose)
+                    context.var.buyposdic[num]['lag'] = 1
+
+        if del_buy_num:
+            for x in del_buy_num:
+                del context.var.buyposdic[x]
+
+        if len(context.var.dailyclose) >= 235:
+            if context.var.pos == 1:
+                context.function.log(u'买开编号：'+str(num)+u'超时，强制结束!')
+                context.function.sell(bar.close)
+                context.var.pos = 0
+                context.function.log(u'买开编号：'+str(num)+u'交易结束，交易结果:'+str(bar.close - context.var.buyposdic[num]['buyprice']))
+                del_buy_num.append(num)
+            elif context.var.pos == -1:
+                context.function.log(u'卖开编号：'+str(num)+u'超时，强制结束!')
+                context.function.cover(bar.close)
+                context.var.pos = 0
+                context.function.log(u'卖开编号：'+str(num)+u'交易结束，交易结果:'+str(context.var.shortposdic[num]['shortprice'] - bar.close))
+                del_short_num.append(num)
+
+
+
+def on_order(context):
+    # my_file_name = 'test.file'
+    # with open('myfile1', my_file_name) as f:
+    #     pass
+    # context.var.myvar += '通过上传文件的文件名定位文件，文件名需要一致'
+    pass
+
+def on_newday(context):
+    pass
+    # context.var.myvar += '当子夜过后，平台会调用这个函数'

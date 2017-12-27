@@ -1,0 +1,371 @@
+.table-operations {
+    margin-bottom: 16px;
+    > button {
+        margin-right: 8px;
+    }
+}
+
+.editable-row-text {
+    padding: 5px;
+}
+
+.editable-row-operations a {
+    margin-right: 8px;
+}
+
+.event-div {
+    padding: 10px;
+    height: 100%;
+    a {
+        color: #000;
+    }
+}
+
+.event-circle {
+    float: right;
+    line-height: 16px;
+    margin-right: 5px;
+    margin-rop: 10px;
+    border-radius: 500px;
+    // border: 1px #fff solid;
+    height: 20px;
+    width: 20px;
+    text-align: center;
+    cursor: default;
+}
+
+.work-event-btn {
+    margin-left: 10px;
+}
+
+.div-right {
+    float: right;
+}
+
+.event-num {
+    margin-left: 20px;
+}
+
+.event-back {
+    background-color: #1ebff0;
+    height: 20px;
+    margin-right: 20px;
+    width: 50px;
+    display: inline-block;
+    margin-bottom: -5px;
+}
+
+.event-lable {
+    padding-right: 10px;
+    line-height: 20px;
+    text-transform: none;
+    font-weight: 400;
+    font-size: 13px;
+    color: #212934;
+    height: 20px;
+}
+
+.num-public {
+    width: 60px;
+    display: inline-block;
+    text-align: justify;
+    vertical-align: top;
+}
+
+.public {
+    width: 100px;
+    display: inline-block;
+    text-align: justify;
+    vertical-align: top;
+    // background-color: #aaa;
+}
+
+.table-font {
+    font-size: 12px;
+}
+
+.chart-body {
+    @media (min-width: 1300px) {
+        width: 33.33333333%;
+    }
+    width: 33.33333333%;
+    // width: 50%;
+    float: left;
+    position: relative;
+    min-height: 1px;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.tab-header {
+    width: 100%;
+    float: left;
+}
+
+.chart-div {
+    height: 612px;
+    // text-align: center;
+    padding: 10px;
+}
+
+.paginat {
+    margin-left: 25px;
+}
+
+.color-black {
+    color: #000;
+    font-weight: bold;
+}
+
+.span-right {
+    float: right;
+}
+
+.run_div {
+    height: 620px;
+}
+
+.run_trade_div {
+    ::-webkit-scrollbar-thumb {
+        border-radius: 10px;
+        background: #ccc;
+        h5 {
+            margin-bottom: 5px;
+        }
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        border-radius: 10px;
+        background: #46b8da;
+    }
+}
+
+.run_predict_div {
+    ::-webkit-scrollbar-thumb {
+        border-radius: 10px;
+        background: #ccc;
+        h5 {
+            margin-bottom: 5px;
+        }
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        border-radius: 10px;
+        background: #ccf;
+    }
+}
+
+.run-trade-div {
+    margin-top: 10px;
+    height: 560px;
+    overflow: auto;
+    padding-right: 5px;
+}
+
+.run-predict-div {
+    margin-top: 10px;
+    height: 560px;
+    overflow: auto;
+    padding-right: 5px;
+}
+
+.dash-overflow {
+    height: 320px;
+    overflow: auto;
+    padding-right: 5px;
+}
+
+.trade-div {
+    border: 1px solid #46b8da;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    padding: 5px;
+    span {
+        max-width: calc(100% - 80px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+    }
+}
+
+.predict-div {
+    border: 1px solid #ccf;
+    // background-color: #ccf;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    padding: 5px;
+    span {
+        max-width: calc(100% - 80px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+    }
+}
+
+.dash-card {
+    .ant-card {
+        box-shadow: rgba(0, 0, 0, 0.3) 0px 2px 8px;
+
+        &:hover {
+            transition: all .6s ease;
+            box-shadow: rgba(0, 0, 0, 0.3) 0px 2px 8px;
+            transform: scale(1.05);
+        }
+    }
+}
+
+.chart_item {
+    // padding: 5px;
+    background: #fff;
+    height: 248px;
+    font-size: 14px;
+    margin: 20px 0;
+    position: relative;
+    &:hover {
+        transition: all .6s ease;
+        box-shadow: rgba(0, 0, 0, 0.3) 0px 2px 8px;
+        transform: scale(1.05);
+    }
+    .chart_chart {
+        width: 100%;
+        height: 200px;
+        transition: all 1s ease 0s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        &:hover {
+            // transform: scale(1.1);
+        }
+    }
+    .float-right {
+        float: right;
+        display: block;
+        margin-top: 5px;
+    }
+    .chart-name {
+        float: left;
+        max-width: calc(100% - 25px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #255da8;
+        margin-bottom: 0;
+        font-size: 15px;
+    }
+    .load-over {
+        background-color: #e3c381;
+        color: #ae8152;
+    }
+    .running {
+        color: #255da8;
+        background: #d5e7ff;
+    }
+    .run-error {
+        color: #DD002C;
+        background-color: #ff7f7f;
+    }
+    .run-over {
+        color: #388347;
+        background: #94D1A0;
+    }
+    .chart-flag {
+        float: right;
+        text-align: center;
+        border-radius: 2px;
+        width: 60px;
+        height: 20px;
+        line-height: 20px;
+    }
+    .chart-datetime {
+        color: #00192f;
+        display: block;
+        clear: both;
+        float: left;
+    }
+    .chart-header {
+        padding: 6px;
+        font-size: 12px;
+        border-bottom: 1px solid #e8ecf0;
+        height: 55px;
+    }
+}
+
+.script-color {
+    color: #FFC266;
+}
+
+.disk-read {
+    color: #66aa00;
+}
+
+.disk-write {
+    color: #fe3912;
+}
+
+.dash-memory {
+    margin-left: 15%;
+    color: #ee9911;
+    .ant-progress-circle-path {
+        stroke: #ee9911;
+    }
+}
+
+.dash-cpu {
+    margin-left: 15%;
+    color: #22aa99;
+    .ant-progress-circle-path {
+        stroke: #22aa99;
+    }
+}
+
+.user-table-div {
+    background-color: rgb(236, 236, 236);
+    width: 96%;
+    // box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: rgba(0, 0, 0, 0.3) 0px 19px 60px, rgba(0, 0, 0, 0.22) 0px 15px 20px;
+    margin-left: 2%;
+}
+
+.table-div {
+    margin-top: 10px;
+    height: 800px;
+    overflow: hidden;
+}
+
+.event-table {
+    height: 800px;
+    margin-top: 10px;
+    text-align: center;
+    table {
+        text-align: center!important;
+    }
+    th {
+        text-align: center!important;
+    }
+    a {
+        color: #57c5f7;
+    }
+}
+
+.event-table-row {
+    text-align: center;
+}
+
+#user_table {
+    margin-top: 20px;
+    height: 100%;
+    text-align: center;
+    font-size: 13px;
+    th {
+        border: 0px;
+        text-align: center;
+    }
+    td {
+        vertical-align: middle;
+        // border: 0px;
+    }
+    background-color: #fff;
+}
+
+.test-tab {
+    height: 195px;
+    width: 100%;
+}

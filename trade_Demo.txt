@@ -1,0 +1,167 @@
+﻿# coding=utf-8
+
+# 针对CTP产品 IF 的Demo 测试代码，使用bbi及RPS处理的指标进行交易，
+
+import numpy as np 
+import time
+import pandas as pd 
+from pandas import Series,DataFrame
+
+# call back function
+def on_init(context):
+    """
+    Params:
+      context - obj
+    """
+	# 入口数据初始化函数
+    # context.function.log('Show time')
+    context.var.barList = []
+    context.now_Rise_fall = []
+    context.Rise_fall = []
+    context.RPS_1 = []
+    context.RPS_11 = []
+    context.RPS_111 = []
+    context.RPS = []
+
+    context.var.testPos = 0
+    context.var.beginTrace = False
+
+def on_start(context):
+    # 策略启动运行的函数
+    # context.function.log('started')
+    # context.var.myvar += '保存后就可以通过context.var获取'
+    context.function.log(u'策略启动')
+    context.var.beginTrace = True 
+
+def on_stop(context):
+    # 策略停止运行的函数
+    # context.var.myvar += '可供调用的函数都在context.function对象里'
+    # context.function.log('stoped')
+    context.function.log(u'策略停止')
+    context.var.beginTrace = False
+
+def on_tick(context):
+    # 这个函数是处理TICK数据的，系统已提供了一分钟一条的BAR数据，除非拼装TICK数据，尽可能不使用该函数。
+    # tick = context.var.tick
+    # context.var.myvar += '某些变量比如tick是由平台维护的，这这个函数里，tick都是最新的'
+    # context.function.log('get tick')
+    # context.function.buy(tick.price)
+    # context.function.sell(tick.price)
+    pass
+
+def on_bar(context):
+    # 策略编写交易过程逻辑代码，主要在本函数中编写,当使用循环时，尽量少于3层嵌套。本函数写好后测试一下运行时间，少于30秒方可在本平台运行。否则报错
+    if not context.var.beginTrace:
+        return 
+
+    bar = context.var.bar
+    context.var.barList.append(bar.close)
+    ser1 = Series(context.var.barList[1:])
+    ser1.index = range(len(ser1))
+    ser2 = Series(context.var.barList[:-1])
+    ser2.index = range(len(ser2))
+    context.Rise_fall = (ser1 - ser2) / ser2
+    context.function.log(str(bar.datetime) + u'当前价格：' + str(bar.close))
+
+    if len(context.var.barList)> 25:
+        context.now_Rise_fall = (context.var.barList[-1] - context.var.barList[-2])/context.var.barList[-2]
+        # context.function.log(str(context.now_Rise_fall))
+
+        MA_3 = sum(context.var.barList[-3:]) / 3.
+        MA_6 = sum(context.var.barList[-6:]) / 6.
+        MA_12 = sum(context.var.barList[-12:]) / 12.
+        MA_24 = sum(context.var.barList[-24:]) / 24.
+        BBI = (MA_3 + MA_6 + MA_12 + MA_24) / 4.
+
+        if len(context.Rise_fall)>2:
+            context.RPS_1 = (context.now_Rise_fall - min(context.Rise_fall)) / (max(context.Rise_fall) - min(context.Rise_fall))
+            context.RPS_11.append(context.RPS_1)
+            context.RPS_111 = Series(context.RPS_11)
+            context.RPS_1 = context.RPS_111.fillna(method = 'ffill')
+            context.RPS = pd.rolling_mean(context.RPS_1,10)
+
+            if context.var.barList[-1] < BBI - 1.5 * np.std(context.var.barList[-24:]):
+                if context.var.testPos == -1:
+                    price_kong = context.mysellprice - context.var.barList[-1]   #平仓差价价格需要高于手续费
+                    if price_kong > 0.2500:
+                        context.function.cover(context.var.barList[-1])
+                        context.function.log(u'平空仓')
+                        context.var.testPos = 0
+
+                elif context.var.testPos == 0:
+                    context.function.buy(context.var.barList[-1])
+                    context.function.log(u'直接多开，买开价')
+                    context.var.testPos = 1
+                    context.mybuyprice = context.var.barList[-1]
+
+                elif context.var.testPos == 1:
+                    price_duo = context.var.barList[-1] - context.mybuyprice 
+                    if price_duo > 3.0100:
+                        context.function.sell(context.var.barList[-1])
+                        context.function.log(u'做多差价已经达到3.0100 进行止盈')
+                        context.var.testPos = 0
+                    elif price_duo < -4.0010:
+                        context.function.sell(context.var.barList[-1])
+                        context.function.log(u'做多差价已经达到-4.0010 进行止损')
+                        context.var.testPos = 0
+
+            elif context.var.barList[-1] > BBI + 1.5 * np.std(context.var.barList[-24:]):
+                if context.var.testPos == 1:
+                    price_duo = context.var.barList[-1] - context.mybuyprice 
+                    if price_duo > 0.2500:
+                        context.function.sell(context.var.barList[-1])
+                        context.function.log(u'平多仓')
+                        context.var.testPos = 0
+
+                elif context.var.testPos == 0:
+                    context.function.short(context.var.barList[-1])
+                    context.function.log(u'直接空开，卖开价')
+                    context.var.testPos = -1
+                    context.mysellprice = context.var.barList[-1]
+
+                elif context.var.testPos == -1:
+                    price_kong = context.mysellprice - context.var.barList[-1]
+                    if price_kong > 3.0100:
+                        context.function.cover(context.var.barList[-1])
+                        context.function.log(u'做空差价已经达到3.0100 进行止盈')
+                        context.var.testPos = 0
+                    elif price_kong < -4.0010:
+                        context.function.sell(context.var.barList[-1])
+                        context.function.log(u'做空差价已经达到-4.0010 进行止损')
+                        context.var.testPos = 0
+
+            else :
+                if context.var.testPos == -1:
+                    price_kong = context.mysellprice - context.var.barList[-1]
+                    if price_kong > 3.0100:
+                        context.function.cover(context.var.barList[-1])
+                        context.function.log(u'做空差价已经达到3.0100 进行止盈')
+                        context.var.testPos = 0
+                    elif price_kong < -4.0010:
+                        context.function.sell(context.var.barList[-1])
+                        context.function.log(u'做空差价已经达到-4.0010 进行止损')
+                        context.var.testPos = 0
+
+                elif context.var.testPos == 1 :
+                    price_duo = context.var.barList[-1] - context.mybuyprice 
+                    if price_duo > 3.0100:
+                        context.function.sell(context.var.barList[-1])
+                        context.function.log(u'做多差价已经达到3.0100 进行止盈')
+                        context.var.testPos = 0
+                    elif price_duo < -4.0010:
+                        context.function.sell(context.var.barList[-1])
+                        context.function.log(u'做多差价已经达到-4.0010 进行止损')
+                        context.var.testPos = 0
+
+def on_order(context):
+    # 一般不使用
+    # my_file_name = 'test.file'
+    # with open('myfile1', my_file_name) as f:
+    #     pass
+    # context.var.myvar += '通过上传文件的文件名定位文件，文件名需要一致'
+    pass
+
+def on_newday(context):
+    # 跨越新一天时调用
+    pass
+    # context.var.myvar += '当子夜过后，平台会调用这个函数'
